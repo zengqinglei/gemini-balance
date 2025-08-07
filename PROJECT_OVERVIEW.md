@@ -75,7 +75,7 @@ gemini-balance/
 
 ### 🔄 API 代理功能
 - **OpenAI 兼容接口**: `/v1/chat/completions`
-- **多模型支持**: `gemini-2.5-flash`, `gemini-2.5-pro`
+- **多模型支持**: 支持 Gemini 1.5、2.0、2.5 全系列模型
 - **流式响应**: 支持 Server-Sent Events
 - **请求格式转换**: OpenAI → Gemini API
 

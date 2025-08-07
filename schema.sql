@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_model_configs_name ON model_configs(model_name);
 
 -- 插入默认配置
 INSERT OR IGNORE INTO system_config (key, value, description) VALUES
-('default_model_name', 'gemini-2.5-flash', '默认模型名称'),
+('default_model_name', 'gemini-2.5-flash', '默认模型名称 (推荐使用最佳性价比模型)'),
 ('request_timeout', '60', 'API请求超时时间（秒）'),
 ('load_balance_strategy', 'adaptive', '负载均衡策略'),
 ('thinking_enabled', 'true', '是否启用思考功能'),
@@ -86,5 +86,16 @@ INSERT OR IGNORE INTO system_config (key, value, description) VALUES
 
 -- 插入默认模型配置
 INSERT OR IGNORE INTO model_configs (model_name, single_api_rpm_limit, single_api_tpm_limit, single_api_rpd_limit) VALUES
-('gemini-2.5-flash', 10, 250000, 250),
-('gemini-2.5-pro', 5, 250000, 100);
+-- Gemini 2.5 系列 (推荐)
+('gemini-2.5-pro', 5, 250000, 100),           -- 最先进推理模型，较低限制
+('gemini-2.5-flash', 10, 250000, 250),        -- 最佳性价比模型
+('gemini-2.5-flash-lite', 15, 250000, 400),   -- 成本优化模型，更高限制
+
+-- Gemini 2.0 系列 (最新功能)
+('gemini-2.0-flash', 8, 250000, 200),         -- 最新功能模型
+('gemini-2.0-flash-lite', 12, 250000, 300),   -- 2.0轻量版
+
+-- Gemini 1.5 系列 (兼容性保留)
+('gemini-1.5-flash', 10, 250000, 250),        -- 快速多模态模型
+('gemini-1.5-flash-8b', 20, 250000, 500),     -- 小型模型，最高限制
+('gemini-1.5-pro', 3, 250000, 50);

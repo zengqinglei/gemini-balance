@@ -134,8 +134,19 @@ ENVIRONMENT = "production"
 
 ### 支持的模型
 
-- `gemini-2.5-flash`: 快速响应模型
-- `gemini-2.5-pro`: 高质量模型
+#### Gemini 2.5 系列 (推荐)
+- `gemini-2.5-pro`: 最先进的推理模型，具有最高响应准确性
+- `gemini-2.5-flash`: 最佳性价比模型，具有完整功能
+- `gemini-2.5-flash-lite`: 成本优化模型，高吞吐量
+
+#### Gemini 2.0 系列 (最新功能)
+- `gemini-2.0-flash`: 最新功能和速度，原生工具使用
+- `gemini-2.0-flash-lite`: 2.0轻量版，成本效率优化
+
+#### Gemini 1.5 系列 (兼容性保留)
+- `gemini-1.5-flash`: 快速多模态模型
+- `gemini-1.5-flash-8b`: 小型模型，适合高频任务
+- `gemini-1.5-pro`: 中型多模态模型，复杂推理
 
 ## 📊 监控和管理
 
