@@ -18,7 +18,27 @@ export function serveAdminInterface() {
     <link rel="stylesheet" href="/admin/style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- 登录界面 -->
+    <div id="login-container" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>🔐 管理员登录</h1>
+                <p>请输入管理员口令以访问 Gemini Balance 管理界面</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="input-group">
+                    <label for="password">管理员口令</label>
+                    <input type="password" id="password" name="password" placeholder="请输入口令" required>
+                </div>
+                <button type="submit" class="login-btn">登录</button>
+                <div id="login-error" class="login-error" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 原有的管理界面 -->
+    <div id="admin-container" class="admin-container" style="display: none;">
+        <div class="container">
         <header class="header">
             <h1>🌟 Gemini Balance 管理界面</h1>
             <p>Cloudflare Worker 版本 - 高性能 Gemini API 代理服务</p>
@@ -29,6 +49,7 @@ export function serveAdminInterface() {
             <button class="nav-btn" data-tab="keys">密钥管理</button>
             <button class="nav-btn" data-tab="config">系统配置</button>
             <button class="nav-btn" data-tab="stats">统计信息</button>
+            <button class="nav-btn logout-btn" id="logout-btn">登出</button>
         </nav>
 
         <!-- 仪表盘 -->
@@ -181,6 +202,7 @@ export function serveAdminInterface() {
 
         <!-- 消息提示 -->
         <div id="message" class="message"></div>
+        </div>
     </div>
 
     <script src="/admin/script.js"></script>
@@ -212,6 +234,120 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     color: #333;
+}
+
+/* 登录界面 */
+.login-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    z-index: 9999 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.login-container[style*="display: none"] {
+    display: none !important;
+}
+
+.login-container:not([style*="display: none"]) {
+    display: flex !important;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 15px !important;
+    padding: 40px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    max-width: 400px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    position: relative !important;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.login-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-weight: 500;
+    color: #333;
+}
+
+.input-group input {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.login-btn {
+    padding: 12px 24px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+}
+
+.login-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 10px;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* 管理界面容器 */
+.admin-container {
+    display: none;
 }
 
 .container {
@@ -267,6 +403,16 @@ body {
 .nav-btn.active {
     background: rgba(255, 255, 255, 0.9);
     color: #333;
+}
+
+/* 登出按钮 */
+.logout-btn {
+    background: rgba(220, 53, 69, 0.8) !important;
+    margin-left: auto;
+}
+
+.logout-btn:hover {
+    background: rgba(220, 53, 69, 0.9) !important;
 }
 
 /* 卡片 */
@@ -558,15 +704,108 @@ export function serveAdminJS() {
 // 全局变量
 let currentTab = 'dashboard';
 const API_BASE = window.location.origin;
+let isLoggedIn = false;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
+    checkLoginStatus();
+    initializeLoginForm();
     initializeNavigation();
-    loadDashboard();
 
     // 每30秒自动刷新状态
     setInterval(refreshStatus, 30000);
 });
+
+// 检查登录状态
+function checkLoginStatus() {
+    const loginToken = localStorage.getItem('admin_login_token');
+    const loginContainer = document.getElementById('login-container');
+    const adminContainer = document.getElementById('admin-container');
+
+    if (loginToken) {
+        isLoggedIn = true;
+        loginContainer.style.display = 'none';
+        adminContainer.style.display = 'block';
+        loadDashboard();
+    } else {
+        isLoggedIn = false;
+        loginContainer.style.display = 'block';
+        adminContainer.style.display = 'none';
+    }
+}
+
+// 初始化登录表单
+function initializeLoginForm() {
+    const loginForm = document.getElementById('login-form');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+}
+
+// 处理登录
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('login-error');
+    const password = passwordInput.value.trim();
+
+    if (!password) {
+        showLoginError('请输入口令');
+        return;
+    }
+
+    try {
+        const response = await fetch(API_BASE + '/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            localStorage.setItem('admin_login_token', data.token);
+            hideLoginError();
+            checkLoginStatus();
+            showMessage('登录成功', 'success');
+        } else {
+            showLoginError(data.message || '登录失败，请检查口令');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showLoginError('登录失败，请稍后重试');
+    }
+}
+
+// 处理登出
+function handleLogout() {
+    localStorage.removeItem('admin_login_token');
+    isLoggedIn = false;
+    checkLoginStatus();
+    showMessage('已登出', 'info');
+}
+
+// 显示登录错误
+function showLoginError(message) {
+    const loginError = document.getElementById('login-error');
+    loginError.textContent = message;
+    loginError.style.display = 'block';
+}
+
+// 隐藏登录错误
+function hideLoginError() {
+    const loginError = document.getElementById('login-error');
+    loginError.style.display = 'none';
+}
 
 // 导航初始化
 function initializeNavigation() {
@@ -586,7 +825,7 @@ function switchTab(tabName) {
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(\`[data-tab="\${tabName}"]\`).classList.add('active');
+    document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
 
     // 更新内容区域
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -617,7 +856,7 @@ function switchTab(tabName) {
 function showMessage(text, type = 'info') {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
-    messageEl.className = \`message \${type}\`;
+    messageEl.className = 'message ' + type;
     messageEl.classList.add('show');
 
     setTimeout(() => {
@@ -628,7 +867,7 @@ function showMessage(text, type = 'info') {
 // API 调用封装
 async function apiCall(endpoint, options = {}) {
     try {
-        const response = await fetch(\`\${API_BASE}\${endpoint}\`, {
+        const response = await fetch(API_BASE + endpoint, {
             headers: {
                 'Authorization': 'admin-key', // 简化的管理员认证
                 'Content-Type': 'application/json',
@@ -638,13 +877,13 @@ async function apiCall(endpoint, options = {}) {
         });
 
         if (!response.ok) {
-            throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
         }
 
         return await response.json();
     } catch (error) {
         console.error('API call failed:', error);
-        showMessage(\`API 调用失败: \${error.message}\`, 'error');
+        showMessage('API 调用失败: ' + error.message, 'error');
         throw error;
     }
 }
@@ -662,7 +901,7 @@ async function loadDashboard() {
 
         // 更新状态颜色
         const serviceStatusEl = document.getElementById('service-status');
-        serviceStatusEl.className = \`status-value \${status.status === 'operational' ? 'healthy' : 'unhealthy'}\`;
+        serviceStatusEl.className = 'status-value ' + (status.status === 'operational' ? 'healthy' : 'unhealthy');
 
     } catch (error) {
         console.error('Failed to load dashboard:', error);
@@ -680,7 +919,7 @@ async function refreshStatus() {
 // 测试 API
 async function testAPI() {
     try {
-        const response = await fetch(\`\${API_BASE}/health\`);
+        const response = await fetch(API_BASE + '/health');
         const data = await response.json();
 
         if (data.status === 'healthy') {
@@ -695,7 +934,7 @@ async function testAPI() {
 
 // 显示 API 文档
 function showApiDocs() {
-    window.open(\`\${API_BASE}/\`, '_blank');
+    window.open(API_BASE + '/', '_blank');
 }
 
 // 加载密钥管理
@@ -706,16 +945,16 @@ async function loadKeys() {
         const keysList = document.getElementById('gemini-keys-list');
 
         if (keys.success && keys.data && keys.data.length > 0) {
-            keysList.innerHTML = keys.data.map(key => \`
-                <div class="key-item">
-                    <div class="key-info">
-                        <div class="key-id">密钥 #\${key.id}</div>
-                        <div class="key-value">\${key.key}</div>
-                        <span class="key-status \${key.health_status}">\${getHealthStatusText(key.health_status)}</span>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteGeminiKey(\${key.id})">删除</button>
-                </div>
-            \`).join('');
+            keysList.innerHTML = keys.data.map(key =>
+                '<div class="key-item">' +
+                    '<div class="key-info">' +
+                        '<div class="key-id">密钥 #' + key.id + '</div>' +
+                        '<div class="key-value">' + key.key + '</div>' +
+                        '<span class="key-status ' + key.health_status + '">' + getHealthStatusText(key.health_status) + '</span>' +
+                    '</div>' +
+                    '<button class="btn btn-danger" onclick="deleteGeminiKey(' + key.id + ')">删除</button>' +
+                '</div>'
+            ).join('');
         } else {
             keysList.innerHTML = '<p>暂无 Gemini API 密钥</p>';
         }
@@ -775,7 +1014,7 @@ async function deleteGeminiKey(keyId) {
     }
 
     try {
-        const result = await apiCall(\`/admin/keys/gemini/\${keyId}\`, {
+        const result = await apiCall('/admin/keys/gemini/' + keyId, {
             method: 'DELETE'
         });
 
@@ -806,15 +1045,14 @@ async function generateUserKey() {
 
             // 显示生成的密钥
             const userKeysList = document.getElementById('user-keys-list');
-            userKeysList.innerHTML = \`
-                <div class="key-item">
-                    <div class="key-info">
-                        <div class="key-id">\${name}</div>
-                        <div class="key-value">\${result.data.key}</div>
-                        <small style="color: #dc3545;">请立即保存此密钥，它不会再次显示</small>
-                    </div>
-                </div>
-            \`;
+            userKeysList.innerHTML =
+                '<div class="key-item">' +
+                    '<div class="key-info">' +
+                        '<div class="key-id">' + name + '</div>' +
+                        '<div class="key-value">' + result.data.key + '</div>' +
+                        '<small style="color: #dc3545;">请立即保存此密钥，它不会再次显示</small>' +
+                    '</div>' +
+                '</div>';
 
             nameInput.value = '';
         } else {
@@ -887,9 +1125,9 @@ async function loadStats() {
             document.getElementById('recent-requests-stat').textContent = data.usage?.recent_requests || 0;
             document.getElementById('total-requests-stat').textContent = data.usage?.total_requests || 0;
             document.getElementById('avg-response-time').textContent =
-                data.performance?.avg_response_time ? \`\${data.performance.avg_response_time.toFixed(0)}ms\` : '-';
+                data.performance?.avg_response_time ? (data.performance.avg_response_time.toFixed(0) + 'ms') : '-';
             document.getElementById('avg-success-rate').textContent =
-                data.performance?.avg_success_rate ? \`\${(data.performance.avg_success_rate * 100).toFixed(1)}%\` : '-';
+                data.performance?.avg_success_rate ? ((data.performance.avg_success_rate * 100).toFixed(1) + '%') : '-';
         }
     } catch (error) {
         console.error('Failed to load stats:', error);

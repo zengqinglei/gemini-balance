@@ -29,14 +29,20 @@ export async function handleAdmin(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
-    
+
+    // 登录路由不需要权限验证
+    if (path === '/admin/login') {
+      return handleAdminLogin(request, env);
+    }
+
     // 检查管理员权限（简化版本）
     const adminCheck = requireAdmin(request);
     if (adminCheck) {
       return adminCheck;
     }
-    
+
     // 路由处理
+
     if (path === '/admin/status') {
       return handleAdminStatus(request, env);
     }
@@ -276,5 +282,41 @@ async function handleStats(request, env) {
   } catch (error) {
     console.error('Failed to get stats:', error);
     return errorResponse('Failed to retrieve statistics', 500);
+  }
+}
+
+/**
+ * 处理管理员登录请求
+ */
+async function handleAdminLogin(request, env) {
+  if (request.method !== 'POST') {
+    return errorResponse('Method not allowed', 405);
+  }
+
+  try {
+    const body = await parseRequestBody(request);
+    const { password } = body;
+
+    if (!password) {
+      return errorResponse('Password is required', 400);
+    }
+
+    // 验证口令是否为 "gandalf"
+    if (password === 'gandalf') {
+      // 生成一个简单的登录token（在生产环境中应该使用更安全的方式）
+      const loginToken = 'admin-logged-in-' + Date.now();
+
+      return successResponse({
+        success: true,
+        token: loginToken,
+        message: 'Login successful'
+      });
+    } else {
+      return errorResponse('Invalid password', 401);
+    }
+
+  } catch (error) {
+    console.error('Login error:', error);
+    return errorResponse('Login failed', 500);
   }
 }
