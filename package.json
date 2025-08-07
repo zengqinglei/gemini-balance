@@ -1,0 +1,26 @@
+{
+  "name": "gemini-balance-worker",
+  "version": "1.0.0",
+  "description": "Gemini API 代理服务 - Cloudflare Worker 版本",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute gemini-balance --file=./schema.sql",
+    "db:migrate": "wrangler d1 migrations apply gemini-balance",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "gemini",
+    "api",
+    "proxy",
+    "cloudflare",
+    "worker"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {}
+}

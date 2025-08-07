@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Balance 管理界面</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🌟 Gemini Balance 管理界面</h1>
+            <p>Cloudflare Worker 版本 - 高性能 Gemini API 代理服务</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-btn active" data-tab="dashboard">仪表盘</button>
+            <button class="nav-btn" data-tab="keys">密钥管理</button>
+            <button class="nav-btn" data-tab="config">系统配置</button>
+            <button class="nav-btn" data-tab="stats">统计信息</button>
+        </nav>
+
+        <!-- 仪表盘 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card">
+                <h2>系统状态</h2>
+                <div id="system-status" class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">服务状态</span>
+                        <span class="status-value" id="service-status">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">可用密钥</span>
+                        <span class="status-value" id="available-keys">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">健康密钥</span>
+                        <span class="status-value" id="healthy-keys">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">最近请求</span>
+                        <span class="status-value" id="recent-requests">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>快速操作</h2>
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="refreshStatus()">刷新状态</button>
+                    <button class="btn btn-secondary" onclick="testAPI()">测试 API</button>
+                    <button class="btn btn-secondary" onclick="showApiDocs()">API 文档</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 密钥管理 -->
+        <div id="keys" class="tab-content">
+            <div class="card">
+                <h2>Gemini API 密钥</h2>
+                <div class="key-actions">
+                    <input type="text" id="new-gemini-key" placeholder="输入 Gemini API Key (AIzaSy...)">
+                    <button class="btn btn-primary" onclick="addGeminiKey()">添加密钥</button>
+                </div>
+                <div id="gemini-keys-list" class="keys-list">
+                    <p>加载中...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>用户访问密钥</h2>
+                <div class="key-actions">
+                    <input type="text" id="user-key-name" placeholder="密钥名称 (可选)">
+                    <button class="btn btn-primary" onclick="generateUserKey()">生成用户密钥</button>
+                </div>
+                <div id="user-keys-list" class="keys-list">
+                    <p>暂无用户密钥</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统配置 -->
+        <div id="config" class="tab-content">
+            <div class="card">
+                <h2>负载均衡配置</h2>
+                <div class="config-form">
+                    <label for="load-balance-strategy">负载均衡策略:</label>
+                    <select id="load-balance-strategy">
+                        <option value="adaptive">自适应策略</option>
+                        <option value="least_used">最少使用策略</option>
+                        <option value="round_robin">轮询策略</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>思考模式配置</h2>
+                <div class="config-form">
+                    <label>
+                        <input type="checkbox" id="thinking-enabled"> 启用思考模式
+                    </label>
+                    <label for="thinking-budget">思考预算:</label>
+                    <select id="thinking-budget">
+                        <option value="-1">自动</option>
+                        <option value="0">禁用</option>
+                        <option value="4096">低 (4k)</option>
+                        <option value="8192">中 (8k)</option>
+                        <option value="24576">Flash最大 (24k)</option>
+                        <option value="32768">Pro最大 (32k)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>其他配置</h2>
+                <div class="config-form">
+                    <label for="request-timeout">请求超时 (秒):</label>
+                    <input type="number" id="request-timeout" min="10" max="300" value="60">
+                </div>
+                <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div id="stats" class="tab-content">
+            <div class="card">
+                <h2>密钥统计</h2>
+                <div id="key-stats" class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">总密钥数</span>
+                        <span class="stat-value" id="total-keys">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">健康密钥</span>
+                        <span class="stat-value" id="healthy-keys-stat">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">异常密钥</span>
+                        <span class="stat-value" id="unhealthy-keys-stat">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">未知状态</span>
+                        <span class="stat-value" id="unknown-keys-stat">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>使用统计</h2>
+                <div id="usage-stats" class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">最近请求</span>
+                        <span class="stat-value" id="recent-requests-stat">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总请求数</span>
+                        <span class="stat-value" id="total-requests-stat">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">平均响应时间</span>
+                        <span class="stat-value" id="avg-response-time">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">平均成功率</span>
+                        <span class="stat-value" id="avg-success-rate">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消息提示 -->
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
