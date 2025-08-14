@@ -11,12 +11,12 @@ ENVIRONMENT = "production"
 [[d1_databases]]
 binding = "DB"
 database_name = "gemini-balance"
-database_id = "02e2de6d-64c6-4548-99a6-9b4d9ac94b34"  # 需要替换为实际的数据库ID
+database_id = "2bd922de-02a4-41fc-b77d-84291da6d75e"  # 需要替换为实际的数据库ID
 
 # KV 存储绑定 (用于缓存和速率限制)
 [[kv_namespaces]]
 binding = "KV"
-id = "fffd06e7d58440fb82862cae58bbd7b0"
+id = "00929619d6ec40499843360f95127dec"
 
 # 开发环境配置
 [env.dev]
@@ -25,11 +25,11 @@ name = "gemini-balance-dev"
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "gemini-balance-dev"
-database_id = "02e2de6d-64c6-4548-99a6-9b4d9ac94b34"
+database_id = "2bd922de-02a4-41fc-b77d-84291da6d75e"
 
 [[env.dev.kv_namespaces]]
 binding = "KV"
-id = "fffd06e7d58440fb82862cae58bbd7b0"
+id = "00929619d6ec40499843360f95127dec"
 
 # 生产环境配置
 [env.production]
@@ -38,8 +38,8 @@ name = "gemini-balance"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "gemini-balance"
-database_id = "02e2de6d-64c6-4548-99a6-9b4d9ac94b34"
+database_id = "2bd922de-02a4-41fc-b77d-84291da6d75e"
 
 [[env.production.kv_namespaces]]
 binding = "KV"
-id = "fffd06e7d58440fb82862cae58bbd7b0"
+id = "00929619d6ec40499843360f95127dec"
